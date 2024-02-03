@@ -2,3 +2,7 @@ home-kubernetes-bedroom.control.1.yaml
 home-kubernetes-bedroom-control-2.yaml
 home-kubernetes-desk.control.1.yaml
 talosconfig
+home-kubernetes-bedroom1.yaml
+home-kubernetes-bedroom2.yaml
+home-kubernetes-bedroom3.yaml
+home-kubernetes-desk1.yaml

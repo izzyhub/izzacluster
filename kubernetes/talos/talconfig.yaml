@@ -37,8 +37,7 @@ nodes:
           ip: "192.168.1.169"
   - hostname: "bedroom2"
     ipAddress: "192.168.1.194"
-    installDiskSelector:
-      serial: "AA2022092560004802"
+    installDisk: "/dev/sda"
     controlPlane: true
     networkInterfaces:
       - interface: eth0
@@ -53,7 +52,7 @@ nodes:
           ip: "192.168.1.169"
   - hostname: "bedroom3"
     ipAddress: "192.168.1.195"
-    installDisk: "/dev/sdb"
+    installDisk: "/dev/sda"
     controlPlane: false
     networkInterfaces:
       - interface: eth0
@@ -66,8 +65,7 @@ nodes:
             gateway: "192.168.1.1"
   - hostname: "desk1"
     ipAddress: "192.168.1.196"
-    installDiskSelector:
-      serial: "23384390BDDB"
+    installDisk: "/dev/sda"
     controlPlane: true
     networkInterfaces:
       - interface: eth0
