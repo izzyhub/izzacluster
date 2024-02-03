@@ -9,7 +9,7 @@ helmCharts:
     releaseName: kubelet-csr-approver
     namespace: kube-system
     valuesInline:
-      providerRegex: ^(bedroom1|bedroom2|bedroom3|desk2.168.1.196)$
+      providerRegex: ^(bedroom1|bedroom2|bedroom3|desk1)$
       bypassDnsResolution: true
 commonAnnotations:
   meta.helm.sh/release-name: kubelet-csr-approver

@@ -23,5 +23,5 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    providerRegex: ^(bedroom1|bedroom2|bedroom3|desk2.168.1.196)$
+    providerRegex: ^(bedroom1|bedroom2|bedroom3|desk1)$
     bypassDnsResolution: true

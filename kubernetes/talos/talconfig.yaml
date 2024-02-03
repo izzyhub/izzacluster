@@ -64,8 +64,8 @@ nodes:
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.1.1"
-  - hostname: "desk2.168.1.196"
-    ipAddress: ""
+  - hostname: "desk1"
+    ipAddress: "192.168.1.196"
     installDiskSelector:
       serial: "23384390BDDB"
     controlPlane: true
@@ -73,7 +73,7 @@ nodes:
       - interface: eth0
         dhcp: false
         addresses:
-          - "/24"
+          - "192.168.1.196/24"
         mtu: 1500
         routes:
           - network: 0.0.0.0/0
