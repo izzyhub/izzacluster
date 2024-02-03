@@ -6,68 +6,86 @@ talosVersion: v1.6.3
 kubernetesVersion: v1.29.1
 
 clusterName: &cluster home-kubernetes
-endpoint: https://{{ cluster.endpoint_vip }}:6443
+endpoint: https://192.168.1.169:6443
 clusterPodNets:
-  - "{{ cluster.pod_network.split(',')[0] }}"
+  - "10.69.0.0/16"
 clusterSvcNets:
-  - "{{ cluster.service_network.split(',')[0] }}"
+  - "10.96.0.0/16"
 additionalApiServerCertSans: &sans
-  - "{{ cluster.endpoint_vip }}"
+  - "192.168.1.169"
   - 127.0.0.1 # KubePrism
-  {% for item in cluster.tls_sans %}
-  - "{{ item }}"
-  {% endfor %}
 additionalMachineCertSans: *sans
 cniConfig:
   name: none
 
 nodes:
-  {% for item in cluster.nodes.inventory %}
-  - hostname: "{{ item.name }}"
-    ipAddress: "{{ item.address }}"
-    {% if item.talos_disk_device.startswith('/') %}
-    installDisk: "{{ item.talos_disk_device }}"
-    {% else %}
+  - hostname: "bedroom1"
+    ipAddress: "192.168.1.193"
     installDiskSelector:
-      serial: "{{ item.talos_disk_device }}"
-    {% endif %}
-    controlPlane: {{ (item.controller) | string | lower }}
+      serial: "S6S1NS0TB05168W"
+    controlPlane: true
     networkInterfaces:
       - interface: eth0
         dhcp: false
         addresses:
-          - "{{ item.address }}/{{ cluster.nodes.host_network.split('/') | last }}"
+          - "192.168.1.193/24"
         mtu: 1500
         routes:
           - network: 0.0.0.0/0
-            gateway: "{{ cluster.nodes.host_network | nthhost(1) }}"
-        {% if item.controller %}
+            gateway: "192.168.1.1"
         vip:
-          ip: "{{ cluster.endpoint_vip }}"
-        {% endif %}
-  {% endfor %}
+          ip: "192.168.1.169"
+  - hostname: "bedroom2"
+    ipAddress: "192.168.1.194"
+    installDiskSelector:
+      serial: "AA2022092560004802"
+    controlPlane: true
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "192.168.1.194/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.1.1"
+        vip:
+          ip: "192.168.1.169"
+  - hostname: "bedroom3"
+    ipAddress: "192.168.1.195"
+    installDisk: "/dev/sdb"
+    controlPlane: false
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "192.168.1.195/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.1.1"
+  - hostname: "desk2.168.1.196"
+    ipAddress: ""
+    installDiskSelector:
+      serial: "23384390BDDB"
+    controlPlane: true
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.1.1"
+        vip:
+          ip: "192.168.1.169"
 
 controlPlane:
-{% if cluster.nodes.talos.schematics.enabled %}
   schematic:
-    id: {{ cluster.nodes.talos.schematics.id }}
+    id: b531e671d84f29c9b4f79ecaabf0c9523aed503a8428f244d7262ba787e01ac3
     customization:
-      {% if cluster.nodes.talos.schematics.customization.extraKernelArgs %}
-      extraKernelArgs:
-        {% for item in cluster.nodes.talos.schematics.customization.extraKernelArgs  %}
-          {{ item | indent(8) }}:
-        {% endfor %}
-      {% endif %}
-      {% if cluster.nodes.talos.schematics.customization.systemExtensions %}
       systemExtensions:
-        {% if cluster.nodes.talos.schematics.customization.systemExtensions.officialExensions %}
-        officialExensions:
-          {% for item in cluster.nodes.talos.schematics.customization.systemExtensions.officialExensions %}
-            - {{ item | indent(10) }}:
-          {% endfor %}
-        {% endif %}
-      {% endif %}
-{% endif %}
   patches:
     # Configure containerd
     - &containerdPatch |-
@@ -108,7 +126,7 @@ controlPlane:
             rotate-server-certificates: true
           nodeIP:
             validSubnets:
-              - "{{ cluster.nodes.host_network }}"
+              - "192.168.1.0/24"
 
     # Enable KubePrism
     - &kubePrismPatch |-
@@ -123,9 +141,7 @@ controlPlane:
       machine:
         network:
           nameservers:
-            {% for item in cluster.nodes.dns_servers %}
-            - {{ item }}
-            {% endfor %}
+            - 1.1.1.1
 
     # Configure NTP
     - &ntpPatch |-
@@ -163,7 +179,7 @@ controlPlane:
           extraArgs:
             listen-metrics-urls: http://0.0.0.0:2381
           advertisedSubnets:
-            - "{{ cluster.nodes.host_network }}"
+            - "192.168.1.0/24"
 
     # Disable default API server admission plugins.
     - |-
@@ -181,28 +197,11 @@ controlPlane:
             allowedKubernetesNamespaces:
               - system-upgrade
 
-{% if cluster.nodes.inventory | selectattr('controller', 'equalto', False) | list | length %}
 worker:
-{% if cluster.nodes.talos.schematics.enabled %}
   schematic:
-    id: {{ cluster.nodes.talos.schematics.id }}
+    id: b531e671d84f29c9b4f79ecaabf0c9523aed503a8428f244d7262ba787e01ac3
     customization:
-      {% if cluster.nodes.talos.schematics.customization.extraKernelArgs %}
-      extraKernelArgs:
-        {% for item in cluster.nodes.talos.schematics.customization.extraKernelArgs  %}
-          {{ item | indent(8) }}:
-        {% endfor %}
-      {% endif %}
-      {% if cluster.nodes.talos.schematics.customization.systemExtensions %}
       systemExtensions:
-        {% if cluster.nodes.talos.schematics.customization.systemExtensions.officialExensions %}
-        officialExensions:
-          {% for item in cluster.nodes.talos.schematics.customization.systemExtensions.officialExensions %}
-            - {{ item | indent(10) }}:
-          {% endfor %}
-        {% endif %}
-      {% endif %}
-{% endif %}
   patches:
     - *containerdPatch
     - *disableSearchDomainPatch
@@ -212,4 +211,3 @@ worker:
     - *nameserverPatch
     - *ntpPatch
     - *sysctlPatch
-{% endif %}
