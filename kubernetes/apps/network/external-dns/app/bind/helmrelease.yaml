@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
-  name: &app echo-server
+  name: &app external-dns-bind
 spec:
   interval: 30m
   chart:
@@ -26,18 +26,37 @@ spec:
   values:
     controllers:
       main:
-        replicas: 2
-        strategy: RollingUpdate
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
         containers:
           main:
             image:
-              repository: ghcr.io/mendhak/http-https-echo
-              tag: 31
+              repository: registry.k8s.io/external-dns/external-dns
+              tag: v0.14.0@sha256:474077b3dfccb3021db0a6638274967d0f64ce60dd9730a6f464bee2f78b046f
             env:
-              HTTP_PORT: &port 8080
-              LOG_WITHOUT_NEWLINE: true
-              LOG_IGNORE_PATH: /healthz
-              PROMETHEUS_ENABLED: true
+              EXTERNAL_DNS_RFC2136_HOST: 192.168.254.10
+              EXTERNAL_DNS_RFC2136_PORT: "53"
+              EXTERNAL_DNS_RFC2136_ZONE: devbu.io
+              EXTERNAL_DNS_RFC2136_TSIG_AXFR: "true"
+              EXTERNAL_DNS_RFC2136_TSIG_KEYNAME: kubernetes-main-key
+              EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG: hmac-sha256
+            envFrom:
+              - secretRef:
+                  name: external-dns-bind-secret
+            args:
+              - --domain-filter=devbu.io
+              - --interval=1m
+              - --log-format=text
+              - --log-level=info
+              - --metrics-address=:7979
+              - --policy=sync
+              - --provider=rfc2136
+              - --registry=txt
+              - --source=ingress
+              - --source=service
+              - --txt-owner-id=default
+              - --txt-prefix=k8s.
             probes:
               liveness: &probes
                 enabled: true
@@ -45,7 +64,7 @@ spec:
                 spec:
                   httpGet:
                     path: /healthz
-                    port: *port
+                    port: &port 7979
                   initialDelaySeconds: 0
                   periodSeconds: 10
                   timeoutSeconds: 1
@@ -57,8 +76,6 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
-              seccompProfile:
-                type: RuntimeDefault
             resources:
               requests:
                 cpu: 10m
@@ -66,16 +83,12 @@ spec:
                 memory: 64Mi
         pod:
           securityContext:
-            runAsUser: 65534
-            runAsGroup: 65534
+            runAsUser: 568
+            runAsGroup: 568
             runAsNonRoot: true
-          topologySpreadConstraints:
-            - maxSkew: 1
-              topologyKey: kubernetes.io/hostname
-              whenUnsatisfiable: DoNotSchedule
-              labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: *app
+    serviceAccount:
+      create: true
+      name: *app
     service:
       main:
         ports:
@@ -84,19 +97,3 @@ spec:
     serviceMonitor:
       main:
         enabled: true
-    ingress:
-      main:
-        enabled: true
-        className: external
-        annotations:
-          external-dns.alpha.kubernetes.io/target: external.devbu.io
-        hosts:
-          - host: &host "{{ .Release.Name }}.devbu.io"
-            paths:
-              - path: /
-                service:
-                  name: main
-                  port: http
-        tls:
-          - hosts:
-              - *host
