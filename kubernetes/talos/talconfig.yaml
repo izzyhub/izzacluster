@@ -80,10 +80,6 @@ nodes:
           ip: "192.168.1.169"
 
 controlPlane:
-  schematic:
-    id: b531e671d84f29c9b4f79ecaabf0c9523aed503a8428f244d7262ba787e01ac3
-    customization:
-      systemExtensions:
   patches:
     # Configure containerd
     - &containerdPatch |-
@@ -196,10 +192,6 @@ controlPlane:
               - system-upgrade
 
 worker:
-  schematic:
-    id: b531e671d84f29c9b4f79ecaabf0c9523aed503a8428f244d7262ba787e01ac3
-    customization:
-      systemExtensions:
   patches:
     - *containerdPatch
     - *disableSearchDomainPatch
