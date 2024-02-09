@@ -1,9 +1,8 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2beta2.json
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
-  name: &app cloudflared
+  name: cloudflared
 spec:
   interval: 30m
   chart:
@@ -23,9 +22,6 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  dependsOn:
-    - name: nginx-external
-      namespace: network
   values:
     controllers:
       main:
@@ -37,20 +33,25 @@ spec:
           main:
             image:
               repository: docker.io/cloudflare/cloudflared
-              tag: 2024.2.0@sha256:4d55d2f8c05a2e372d62dc3e84586e2b87730d6fb372fdb1801dd7dbab70187c
+              tag: 2024.1.5
             env:
-              NO_AUTOUPDATE: true
+              NO_AUTOUPDATE: "true"
               TUNNEL_CRED_FILE: /etc/cloudflared/creds/credentials.json
               TUNNEL_METRICS: 0.0.0.0:8080
               TUNNEL_ORIGIN_ENABLE_HTTP2: true
               TUNNEL_TRANSPORT_PROTOCOL: quic
               TUNNEL_POST_QUANTUM: true
+              TUNNEL_ID:
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudflared-secret
+                    key: TUNNEL_ID
             args:
               - tunnel
               - --config
               - /etc/cloudflared/config/config.yaml
               - run
-              - "${CLUSTER_CLOUDFLARE_TUNNEL_ID}"
+              - "$(TUNNEL_ID)"
             probes:
               liveness: &probes
                 enabled: true
@@ -66,35 +67,21 @@ spec:
               readiness: *probes
               startup:
                 enabled: false
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities: { drop: ["ALL"] }
             resources:
               requests:
-                cpu: 10m
+                cpu: 5m
+                memory: 128M
               limits:
-                memory: 256Mi
+                memory: 256M
         pod:
           securityContext:
             runAsUser: 568
             runAsGroup: 568
-            runAsNonRoot: true
-          topologySpreadConstraints:
-            - maxSkew: 1
-              topologyKey: kubernetes.io/hostname
-              whenUnsatisfiable: DoNotSchedule
-              labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: *app
     service:
       main:
         ports:
           http:
             port: *port
-    serviceMonitor:
-      main:
-        enabled: true
     persistence:
       config:
         enabled: true
@@ -106,7 +93,7 @@ spec:
             readOnly: true
       creds:
         type: secret
-        name: cloudflared-tunnel-secret
+        name: cloudflared-secret
         globalMounts:
           - path: /etc/cloudflared/creds/credentials.json
             subPath: credentials.json
