@@ -115,9 +115,9 @@ spec:
         enabled: true
         className: external
         annotations:
-          external-dns.alpha.kubernetes.io/target: external.devbu.io
+          external-dns.alpha.kubernetes.io/target: external.izzyshome.online
         hosts:
-          - host: &host status.devbu.io
+          - host: &host status.izzyshome.online
             paths:
               - path: /
                 service:

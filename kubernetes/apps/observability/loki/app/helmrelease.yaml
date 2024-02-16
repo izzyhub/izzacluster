@@ -134,7 +134,7 @@ spec:
         enabled: true
         ingressClassName: internal
         hosts:
-          - host: &host loki.devbu.io
+          - host: &host loki.izzyshome.online
             paths:
               - path: /
                 pathType: Prefix

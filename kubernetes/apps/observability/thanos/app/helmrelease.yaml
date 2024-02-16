@@ -76,7 +76,7 @@ spec:
       ingress:
         enabled: true
         ingressClassName: internal
-        hostname: &host thanos-query-frontend.devbu.io
+        hostname: &host thanos-query-frontend.izzyshome.online
         tls: true
         extraTls:
           - hosts:
@@ -116,7 +116,8 @@ spec:
       enabled: true
       replicaCount: 2
       replicaLabel: __replica__
-      alertmanagers: ["http://alertmanager-operated.observability.svc.cluster.local:9093"]
+      alertmanagers:
+        ["http://alertmanager-operated.observability.svc.cluster.local:9093"]
       extraFlags: ["--web.prefix-header=X-Forwarded-Prefix"]
       config: |-
         groups:

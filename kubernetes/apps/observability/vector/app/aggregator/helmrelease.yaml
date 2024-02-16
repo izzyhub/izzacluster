@@ -61,7 +61,7 @@ spec:
       main:
         type: LoadBalancer
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: vector.devbu.io
+          external-dns.alpha.kubernetes.io/hostname: vector.izzyshome.online
           io.cilium/lb-ipam-ips: 192.168.42.201
         ports:
           http:
